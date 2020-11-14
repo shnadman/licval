@@ -54,7 +54,7 @@ export default ({ images, setImages }) => {
         dragProps,
       }) => (
         // write your building UI
-        <div>
+        <div style={{ padding: 15 }}>
           <div className={classes.form}>
             <div className={classes.buttons}>
               <Button

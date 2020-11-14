@@ -14,9 +14,7 @@ const sendMail = async (email, content) => {
 
     // create reusable transporter object using the default SMTP transport
     let transporter = nodemailer.createTransport({
-      service: "Gmail",
-      //  port: 587,
-      // secure: false, // true for 465, false for other ports
+      service: "gmail",
       auth: {
         user: "roshhaain1@gmail.com", // generated ethereal user
         pass: "rosh1234", // generated ethereal password
@@ -29,7 +27,7 @@ const sendMail = async (email, content) => {
       to: email, // list of receivers
       subject: "Rosh Ha Ayin Parking service notification", // Subject line
       text: content, // plain text body
-      html: "<b>You have been approved for parking</b>", // html body
+      html: `<b>${content}</b>`, // html body
     });
 
     console.log("Message sent: %s", info.messageId);
@@ -46,6 +44,10 @@ const sendMail = async (email, content) => {
 const handleNan = (word) => {
   const english = /^[A-Za-z]*$/;
   return english.test(word) ? word : word.split("").reverse().join("");
+};
+
+const isValidDate = (d) => {
+  return d instanceof Date && !isNaN(d);
 };
 
 const isDateCandidate = (word) => {
@@ -76,7 +78,9 @@ const extractDate = (arr, relevant) => {
     _.parseInt(words[0]),
   ];
   const expireDate = new Date(year, month - 1, day);
-  relevant.driverExpires = expireDate;
+  if (isValidDate(expireDate)) {
+    relevant.driverExpires = expireDate;
+  }
 };
 
 const extractId = (arr, relevant) => {
@@ -86,24 +90,30 @@ const extractId = (arr, relevant) => {
 
 const extractFirstName = (arr, relevant) => {
   const words = _.words(arr).filter((word) => isEnglish(word));
-  relevant.firstName = words.join(" ");
+  const firstName = words.join(" ");
+  if (!isNameProbalyWrong(firstName)) {
+    relevant.firstName = firstName;
+  }
 };
 
 const extractLastName = (arr, relevant) => {
   const words = _.words(arr).filter((word) => isEnglish(word));
-  relevant.lastName = words.join(" ");
+  const lastName = words.join(" ");
+  if (!isNameProbalyWrong(lastName)) {
+    relevant.lastName = lastName;
+  }
 };
 
 const handleId = async (relevant, id) => {
   let ans = false;
 
-  let threshold = 125;
+  let threshold = 145;
 
   const worker = createWorker({
     logger: (m) => console.log(m),
   });
 
-  for (let attempt = 0; attempt < 5 && !ans; attempt++) {
+  for (let attempt = 0; attempt < 7 && !ans; attempt++) {
     jimpify(threshold - attempt * 10, id);
     await worker.load();
     await worker.loadLanguage("eng");
@@ -130,6 +140,7 @@ const handleId = async (relevant, id) => {
 
 const carLisAttempt = (relevant, lines) => {
   const linesText = lines.map((line) => _.trim(line.text));
+  console.log(linesText);
 
   if (!relevant.carExpires) {
     const filteredDates = linesText.filter((line) => isDateCandidate(line));
@@ -139,9 +150,12 @@ const carLisAttempt = (relevant, lines) => {
       _.parseInt(parsedDates[1]),
       _.parseInt(parsedDates[0]),
     ];
-
-    relevant.carExpires = new Date(year, month - 1, day);
+    const carExpires = new Date(year, month - 1, day);
+    if (isValidDate(carExpires)) {
+      relevant.carExpires = new Date(year, month - 1, day);
+    }
   }
+  console.log(relevant);
 
   if (!relevant.carNumber) {
     const filteredCarNumber = linesText.filter((line) => isCarNumber(line));
@@ -149,13 +163,17 @@ const carLisAttempt = (relevant, lines) => {
     //exec returns an array if a match was found, in the first cell ([0]) we have the match inside it's own array
     //so we take it by getting the first cell again ([0])
     const parsedCarNumber = carNumberRegex.exec(filteredCarNumber[0])[0];
-    relevant.carNumber = parsedCarNumber;
+    if (!_.startsWith(relevant.id, parsedCarNumber))
+      relevant.carNumber = parsedCarNumber;
   }
 
+  console.log(relevant);
   const idRegex = /(?=.{9,10}$)[0-9]+(?:-[0-9])/;
   const filteredIdLine = linesText.filter((line) => idRegex.test(line))[0];
-  const id = filteredIdLine.split(" ")[0].split("-").join("");
-  return _.parseInt(id);
+  if (filteredIdLine) {
+    const id = filteredIdLine.split(" ")[0].split("-").join("");
+    return _.parseInt(id);
+  }
 };
 
 const handleCarLis = async (relevant, carLicense) => {
@@ -163,10 +181,10 @@ const handleCarLis = async (relevant, carLicense) => {
   const extractedAll = () =>
     relevant.carExpires && relevant.carNumber && carLisID;
 
-  let threshold = 100;
+  let threshold = 145;
 
-  for (let attempt = 0; attempt < 5 && !extractedAll(); attempt++) {
-    jimpify(threshold, carLicense);
+  for (let attempt = 0; attempt < 7 && !extractedAll(); attempt++) {
+    jimpify(threshold - attempt * 10, carLicense);
 
     const worker = createWorker({
       logger: (m) => console.log(m),
@@ -188,7 +206,7 @@ const handleCarLis = async (relevant, carLicense) => {
   return relevant.id === carLisID;
 };
 
-const retryExtractDate = (linesText, relevant) => {
+const retryExtractDate = (linesText, relevant, extractedDates) => {
   const date = /(0?[1-9]|[12][0-9]|3[01])[\/\-.](0?[1-9]|1[012])[\/\-.]\d{4}/;
 
   const filteredDatesLines = linesText.filter((line) => date.test(line));
@@ -204,18 +222,23 @@ const retryExtractDate = (linesText, relevant) => {
     ];
     return new Date(year, month - 1, day);
   });
-  const maxDate = new Date(Math.max.apply(null, parsedDates));
-  console.log(maxDate);
-
-  relevant.driverExpires = maxDate;
+  extractedDates = _.union(extractedDates, parsedDates);
+  if (extractedDates.length === 3) {
+    const maxDate = new Date(Math.max.apply(null, parsedDates));
+    console.log(maxDate);
+    if (isValidDate(maxDate)) {
+      relevant.driverExpires = maxDate;
+    }
+  }
 };
 
 const driversLicenseAttempt = (relevant, lines) => {
   const expirationPrefix = /4b.(.*)/;
   const idPrefix = /D.(.*)/;
-  const lastNamePrefix = / .1(.*)/;
-  const firstNamePrefix = / .2(.*)/;
+  const lastNamePrefix = /1.(.*)|.1(.*)/;
+  const firstNamePrefix = /2.(.*)|.2(.*)/;
   const roshHaAyin = /תל אביב - יפו/;
+  let extractedDates = [];
 
   const linesText = lines.map((line) => _.trim(line.text));
   console.log(linesText);
@@ -250,8 +273,14 @@ const driversLicenseAttempt = (relevant, lines) => {
   });
 
   if (!relevant.driverExpires) {
-    retryExtractDate(linesText, relevant);
+    retryExtractDate(linesText, relevant, extractedDates);
   }
+};
+
+const isNameProbalyWrong = (name) => {
+  const index = _.findIndex(name.split(" "), (subName) => subName.length === 1);
+
+  return index !== -1;
 };
 
 const handleDriversLicense = async (relevant, driverLicense) => {
@@ -262,9 +291,9 @@ const handleDriversLicense = async (relevant, driverLicense) => {
     relevant.id &&
     relevant.roshHaAyinCitizen;
 
-  let threshold = 125;
+  let threshold = 145;
 
-  for (let attempt = 0; attempt < 5 && !extractedAll(); attempt++) {
+  for (let attempt = 0; attempt < 7 && !extractedAll(); attempt++) {
     jimpify(threshold - attempt * 10, driverLicense);
     const worker = createWorker({
       langPath: "heb.traineddata",
@@ -316,26 +345,43 @@ exports.validateParking = async (req, res, next) => {
     id[0]["buffer"],
   ];
 
-  let relevant = {};
+  let relevant = { roshHaAyinCitizen: false };
   let idsMatch = false;
+
   await handleDriversLicense(relevant, driverLicenseImage);
-  // idsMatch = await handleId(relevant, idImage);
-  // if (!idsMatch)
-  //   return res.send("Id numbers in driver's license and ID don't match!");
+  console.log(relevant, idsMatch);
+  /*
+  idsMatch = await handleId(relevant, idImage);
+   if (!idsMatch)
+     return res.send("Id numbers in driver's license and ID don't match!");
+*/
   idsMatch = await handleCarLis(relevant, carLicenseImage);
   console.log(relevant);
 
-  if (!idsMatch)
+  if (!idsMatch) {
+    await sendMail(
+      email,
+      "Id numbers in driver's license and car license don't match!"
+    );
     return res.send(
       "Id numbers in driver's license and car license don't match!"
     );
+  }
   const today = new Date();
 
-  if (!relevant.roshHaAyinCitizen)
+  if (!relevant.roshHaAyinCitizen) {
+    await sendMail(email, "Denied! Not a citizen of Rosh Ha Ayin");
     return res.send("Denied! Not a citizen of Rosh Ha Ayin");
-  if (relevant.driverExpires < today)
-    return res.send("Denied! Driver license expired");
-  //if(relevant.carExpires<today) return res.send("Denied! Car license expired");
+  }
+  if (relevant.driverExpires < today) {
+    await sendMail(email, "Denied! Driver license expired");
+    return res.status(400).send("Denied! Driver license expired");
+  }
+
+  if (relevant.carExpires < today) {
+    await sendMail(email, "Denied! Car license expired");
+    return res.status(400).send("Denied! Car license expired");
+  }
 
   const driver = new Driver({ ...relevant, email });
 
@@ -343,7 +389,6 @@ exports.validateParking = async (req, res, next) => {
 
   driver.save();
 
-  await sendMail(email, "Yay, you have been approved for parking");
-
+  await sendMail(email, "Yofi, you have been approved for parking");
   res.send("Approved!");
 };

@@ -8,6 +8,9 @@ import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import ImageUpload from "./ImageUpload";
+import Box from "@material-ui/core/Box";
+import Paper from "@material-ui/core/Paper";
+import logo from "./static/logo.png";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -26,6 +29,13 @@ const useStyles = makeStyles((theme) => ({
     fontSize: theme.typography.pxToRem(15),
     fontWeight: theme.typography.fontWeightRegular,
   },
+  header: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {},
 }));
 
 export function App() {
@@ -53,19 +63,25 @@ export function App() {
   };
 
   return (
-    <div className="App">
+    <div>
       <Container maxWidth="md">
-        <Typography variant="h2">Rosh Ha Ayin parking validation</Typography>
-        <ImageUpload images={images} setImages={setImages} />
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField
-            placeholder={"Ex. avi123@gmail.com"}
-            fullWidth
-            inputRef={register}
-            name={"email"}
-          />
-          <Button type="submit">Submit</Button>
-        </form>
+        <Paper className={classes.container} elevation={3}>
+          <div className={classes.header}>
+            <Typography variant="h2">הנפקת תו חניה אוטומטית</Typography>
+            <Typography variant="h4">עיריית ראש העין</Typography>
+            <img src={logo} height="111px" width="140px" />
+          </div>
+          <ImageUpload images={images} setImages={setImages} />
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <TextField
+              placeholder={"Ex. avi123@gmail.com"}
+              fullWidth
+              inputRef={register}
+              name={"email"}
+            />
+            <Button type="submit">Submit</Button>
+          </form>
+        </Paper>
       </Container>
     </div>
   );
