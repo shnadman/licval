@@ -1,5 +1,5 @@
 const _ = require("lodash");
-import { jimpify } from "../parking";
+const jimpify = require("./jimpify");
 
 const tesseract = require("tesseract.js");
 const { createWorker } = tesseract;
@@ -119,7 +119,7 @@ const driversLicenseAttempt = (relevant, lines) => {
   }
 };
 
-export const handleDriversLicense = async (relevant, driverLicense) => {
+exports.handleDriversLicense = async (relevant, driverLicense) => {
   const extractedAll = () =>
     relevant.driverExpires &&
     relevant.firstName &&

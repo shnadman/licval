@@ -1,15 +1,11 @@
 const _ = require("lodash");
-const mongoose = require("mongoose");
-const Jimp = require("jimp");
 const nodemailer = require("nodemailer");
-
 const tesseract = require("tesseract.js");
-const PSM = require("tesseract.js/src/constants/PSM.js");
 const { createWorker } = tesseract;
 const { Driver } = require("../models/driver");
-import { handleId } from "./helpers/id";
-import { handleDriversLicense } from "./helpers/driverLicense";
-import { handleCarLis } from "./helpers/carLicense";
+const { handleId } = require("./helpers/id");
+const { handleDriversLicense } = require("./helpers/driverLicense");
+const { handleCarLis } = require("./helpers/carLicense");
 
 const sendMail = async (email, content) => {
   try {
@@ -42,21 +38,6 @@ const sendMail = async (email, content) => {
   } catch (e) {
     console.error(e);
   }
-};
-
-export const jimpify = (threshold, path) => {
-  Jimp.read(path)
-    .then((img) => {
-      return img
-        .quality(100) // set JPEG quality
-        .resize(1024, Jimp.AUTO)
-        .greyscale()
-        .threshold({ max: threshold, autoGreyscale: false })
-        .write("renderedNew.png"); // save
-    })
-    .catch((err) => {
-      console.error(err);
-    });
 };
 
 exports.validateParking = async (req, res, next) => {

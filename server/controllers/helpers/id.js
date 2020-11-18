@@ -1,5 +1,5 @@
 const _ = require("lodash");
-import { jimpify } from "../parking";
+const jimpify = require("./jimpify");
 
 const tesseract = require("tesseract.js");
 const { createWorker } = tesseract;
@@ -9,7 +9,7 @@ const isIdCandidate = (line) => {
   return number.test(line);
 };
 
-export const handleId = async (relevant, id) => {
+exports.handleId = async (relevant, id) => {
   let ans = false;
 
   let threshold = 145;
