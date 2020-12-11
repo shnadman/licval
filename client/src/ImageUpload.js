@@ -27,8 +27,25 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default ({ images, setImages }) => {
-  const maxNumber = 3;
+  const maxNumber = 4;
   const classes = useStyles();
+
+  const renderGuideText = (imageList) => {
+    switch (imageList.length) {
+      case 0:
+        return <Typography>בחר תעודת זהות </Typography>;
+      case 1:
+        return <Typography>בחר ספח תעודת זהות </Typography>;
+      case 2:
+        return <Typography>בחר רשיון נהיגה</Typography>;
+      case 3:
+        return <Typography>בחר רשיון רכב</Typography>;
+      case 4:
+        return <Typography>הזן כתובת אימייל</Typography>;
+      default:
+        <Typography>בחר תעודת זהות </Typography>;
+    }
+  };
 
   const onChange = (imageList, addUpdateIndex) => {
     // data for submit
@@ -54,47 +71,57 @@ export default ({ images, setImages }) => {
         dragProps,
       }) => (
         // write your building UI
-        <div style={{ padding: 15 }}>
-          <div className={classes.form}>
-            <div className={classes.buttons}>
-              <Button
-                variant="contained"
-                color="primary"
-                style={isDragging ? { color: "red" } : undefined}
-                onClick={onImageUpload}
-                {...dragProps}
-              >
-                Add your Driver's License, Car License and ID
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={onImageRemoveAll}
-              >
-                Remove all images
-              </Button>
-            </div>
-            {imageList.map((image, index) => (
-              <div key={index} className="image-item">
-                <img src={image["data_url"]} alt="" width="100" />
-                <div className="image-item__btn-wrapper">
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    onClick={() => onImageUpdate(index)}
-                  >
-                    Update
-                  </Button>
-                  <Button
-                    color="secondary"
-                    variant="outlined"
-                    onClick={() => onImageRemove(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
+        <div>
+          <div style={{ padding: 15 }}>
+            <div className={classes.form}>
+              <div className={classes.buttons}>
+                <Button
+                  variant={imageList.length === 4 ? "disabled" : "contained"}
+                  color="primary"
+                  style={isDragging ? { color: "red" } : undefined}
+                  onClick={onImageUpload}
+                  {...dragProps}
+                >
+                  {renderGuideText(imageList)}
+                </Button>
+                <Button
+                  variant={imageList.length === 0 ? "disabled" : "contained"}
+                  color="secondary"
+                  onClick={onImageRemoveAll}
+                >
+                  הסר את כל התמונות
+                </Button>
               </div>
-            ))}
+              {imageList.map((image, index) => (
+                <div
+                  key={index}
+                  className="image-item"
+                  style={{
+                    padding: 15,
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img src={image["data_url"]} alt="" width="100" />
+                  <div className="image-item__btn-wrapper">
+                    <Button
+                      color="primary"
+                      variant="outlined"
+                      onClick={() => onImageUpdate(index)}
+                    >
+                      עדכן
+                    </Button>
+                    <Button
+                      color="secondary"
+                      variant="outlined"
+                      onClick={() => onImageRemove(index)}
+                    >
+                      הסר
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

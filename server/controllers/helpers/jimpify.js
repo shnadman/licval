@@ -8,7 +8,7 @@ module.exports = (threshold, path) => {
         .resize(1024, Jimp.AUTO)
         .greyscale()
         .threshold({ max: threshold, autoGreyscale: false })
-        .write("renderedNew.png"); // save
+        .write("./renderedNew.png"); // save
     })
     .catch((err) => {
       console.error(err);

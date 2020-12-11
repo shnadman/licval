@@ -10,9 +10,10 @@ router
   .route("/")
   .post(
     upload.fields([
+      { name: "id" },
+      { name: "idAttachment" },
       { name: "driverLicense" },
       { name: "carLicense" },
-      { name: "id" },
     ]),
     validateParking
   );

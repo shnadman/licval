@@ -41,15 +41,19 @@ const useStyles = makeStyles((theme) => ({
 export function App() {
   const { handleSubmit, register } = useForm();
   const [images, setImages] = React.useState([]);
+  const [enteredMail, setEnteredMail] = React.useState(false);
   const classes = useStyles();
 
   const onSubmit = async ({ email }) => {
     let bodyFormData = new FormData();
-    const [driverLicense, carLicense, id] = images.map((img) => img["file"]);
+    const [id, idAttachment, driverLicense, carLicense] = images.map(
+      (img) => img["file"]
+    );
     bodyFormData.append("email", email);
+    bodyFormData.append("id", id);
+    bodyFormData.append("idAttachment", idAttachment);
     bodyFormData.append("driverLicense", driverLicense);
     bodyFormData.append("carLicense", carLicense);
-    bodyFormData.append("id", id);
     try {
       const res = await api.post("/", bodyFormData, {
         headers: {
@@ -71,15 +75,24 @@ export function App() {
             <Typography variant="h4">עיריית ראש העין</Typography>
             <img src={logo} height="111px" width="140px" />
           </div>
-          <ImageUpload images={images} setImages={setImages} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ImageUpload images={images} setImages={setImages} />
+          </div>
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
               placeholder={"Ex. avi123@gmail.com"}
               fullWidth
               inputRef={register}
               name={"email"}
+              onInputCapture={() => setEnteredMail(true)}
             />
-            <Button type="submit">Submit</Button>
+            <Button
+              variant={enteredMail ? "contained" : "disabled"}
+              color="primary"
+              type="submit"
+            >
+              Submit
+            </Button>
           </form>
         </Paper>
       </Container>

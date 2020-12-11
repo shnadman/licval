@@ -25,6 +25,7 @@ const carLisAttempt = (relevant, lines) => {
   if (!relevant.carExpires) {
     const filteredDates = linesText.filter((line) => isDateCandidate(line));
     const parsedDates = _.words(filteredDates[0]);
+    console.log(parsedDates);
     const [year, month, day] = [
       _.parseInt(parsedDates[2]),
       _.parseInt(parsedDates[1]),
@@ -47,6 +48,13 @@ const carLisAttempt = (relevant, lines) => {
       relevant.carNumber = parsedCarNumber;
   }
 
+  if (!relevant.carType) {
+    const M1 = /M1/;
+    linesText.forEach((line) => {
+      if (line.match(M1) !== null) relevant.carType = true;
+    });
+  }
+
   console.log(relevant);
   const idRegex = /(?=.{9,10}$)[0-9]+(?:-[0-9])/;
   const filteredIdLine = linesText.filter((line) => idRegex.test(line))[0];
@@ -59,7 +67,7 @@ const carLisAttempt = (relevant, lines) => {
 exports.handleCarLis = async (relevant, carLicense) => {
   let carLisID;
   const extractedAll = () =>
-    relevant.carExpires && relevant.carNumber && carLisID;
+    relevant.carExpires && relevant.carNumber && relevant.carType && carLisID;
 
   let threshold = 145;
 
@@ -81,6 +89,7 @@ exports.handleCarLis = async (relevant, carLicense) => {
     console.log(`Attempt number ${attempt}`);
     carLisID = carLisAttempt(relevant, lines);
     console.log("Temp relevant is ", relevant);
+    await worker.terminate();
   }
 
   return relevant.id === carLisID;

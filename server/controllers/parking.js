@@ -6,6 +6,7 @@ const { Driver } = require("../models/driver");
 const { handleId } = require("./helpers/id");
 const { handleDriversLicense } = require("./helpers/driverLicense");
 const { handleCarLis } = require("./helpers/carLicense");
+const { handleIdAttachment } = require("./helpers/idAttachment");
 
 const sendMail = async (email, content) => {
   try {
@@ -44,11 +45,13 @@ exports.validateParking = async (req, res, next) => {
   process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
   const { email } = req.body;
 
-  const { driverLicense, carLicense, id } = req.files;
-  const [driverLicenseImage, carLicenseImage, idImage] = [
+  const { id, idAttachment, driverLicense, carLicense } = req.files;
+
+  const [idImage, idAttachmentImage, driverLicenseImage, carLicenseImage] = [
+    id[0]["buffer"],
+    idAttachment[0]["buffer"],
     driverLicense[0]["buffer"],
     carLicense[0]["buffer"],
-    id[0]["buffer"],
   ];
 
   let relevant = { roshHaAyinCitizen: false };
@@ -56,13 +59,11 @@ exports.validateParking = async (req, res, next) => {
 
   await handleDriversLicense(relevant, driverLicenseImage);
   console.log(relevant, idsMatch);
-  /*
   idsMatch = await handleId(relevant, idImage);
-   if (!idsMatch)
-     return res.send("Id numbers in driver's license and ID don't match!");
-*/
+  if (!idsMatch)
+    return res.send("Id numbers in driver's license and ID don't match!");
+
   idsMatch = await handleCarLis(relevant, carLicenseImage);
-  console.log(relevant);
 
   if (!idsMatch) {
     await sendMail(
@@ -73,12 +74,19 @@ exports.validateParking = async (req, res, next) => {
       "Id numbers in driver's license and car license don't match!"
     );
   }
+  if (!relevant.carType) {
+    await sendMail(email, "Wrong car type!");
+    return res.send("Wrong car type!");
+  }
+  delete relevant.carType;
   const today = new Date();
 
-  if (!relevant.roshHaAyinCitizen) {
+  const isRHCitizen = handleIdAttachment(relevant, idAttachmentImage);
+  if (!relevant.roshHaAyinCitizen || isRHCitizen) {
     await sendMail(email, "Denied! Not a citizen of Rosh Ha Ayin");
     return res.send("Denied! Not a citizen of Rosh Ha Ayin");
   }
+
   if (relevant.driverExpires < today) {
     await sendMail(email, "Denied! Driver license expired");
     return res.status(400).send("Denied! Driver license expired");
@@ -94,7 +102,6 @@ exports.validateParking = async (req, res, next) => {
   console.log(driver);
 
   driver.save();
-
   await sendMail(email, "Yofi, you have been approved for parking");
   res.send("Approved!");
 };

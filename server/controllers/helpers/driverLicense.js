@@ -14,6 +14,8 @@ const isNameProbalyWrong = (name) => {
   return index !== -1;
 };
 
+const isEnglish = (word) => /^[a-zA-Z]+$/.test(word);
+
 const extractDate = (arr, relevant) => {
   const words = _.words(arr);
   const [year, month, day] = [
@@ -79,7 +81,7 @@ const driversLicenseAttempt = (relevant, lines) => {
   const idPrefix = /D.(.*)/;
   const lastNamePrefix = /1.(.*)|.1(.*)/;
   const firstNamePrefix = /2.(.*)|.2(.*)/;
-  const roshHaAyin = /תל אביב - יפו/;
+  const roshHaAyin = /ראש העין/;
   let extractedDates = [];
 
   const linesText = lines.map((line) => _.trim(line.text));
