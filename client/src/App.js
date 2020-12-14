@@ -11,6 +11,11 @@ import ImageUpload from "./ImageUpload";
 import Box from "@material-ui/core/Box";
 import Paper from "@material-ui/core/Paper";
 import logo from "./static/logo.png";
+import DeleteIcon from "@material-ui/icons/Delete";
+import Accordion from "@material-ui/core/Accordion";
+import AccordionSummary from "@material-ui/core/AccordionSummary";
+import AccordionDetails from "@material-ui/core/AccordionDetails";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -42,6 +47,7 @@ export function App() {
   const { handleSubmit, register } = useForm();
   const [images, setImages] = React.useState([]);
   const [enteredMail, setEnteredMail] = React.useState(false);
+  const [deleteSuccess, setDeleteSuccess] = React.useState(null);
   const classes = useStyles();
 
   const onSubmit = async ({ email }) => {
@@ -66,6 +72,77 @@ export function App() {
     }
   };
 
+  const renderDeleteResponse =
+    deleteSuccess !== null ? (
+      <Box>
+        <Typography>
+          {!deleteSuccess ? "פרטים לא נכונים" : "תו חניה בוטל בהצליה"}
+        </Typography>
+      </Box>
+    ) : null;
+  const handleDelete = async ({ emailDelete, idDelete }) => {
+    try {
+      const res = await api.delete(`/cancelParking/${emailDelete}/${idDelete}`);
+      setDeleteSuccess(true);
+    } catch (e) {
+      //If we are here then the email or id didnt match the database!
+      setDeleteSuccess(false);
+    }
+  };
+
+  const renderAccordion = (
+    <Paper className={classes.container}>
+      <Accordion style={{ marginTop: 50 }}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+          style={{ display: "flex", alignItems: "center" }}
+        >
+          <Typography variant="h5" className={classes.header}>
+            ביטול תו חניה
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails style={{ justifyContent: "center" }}>
+          <form onSubmit={handleSubmit(handleDelete)}>
+            <div
+              style={{
+                display: "flex",
+                height: 200,
+                width: 450,
+                justifyContent: "space-between",
+                flexDirection: "column",
+              }}
+            >
+              <TextField
+                placeholder={"הכנס תעודת זהות"}
+                fullWidth
+                inputRef={register}
+                name={"idDelete"}
+              />
+              <TextField
+                placeholder={"הכנס כתובת מייל"}
+                fullWidth
+                inputRef={register}
+                name={"emailDelete"}
+              />
+              {renderDeleteResponse}
+              <Button
+                color="secondary"
+                type="submit"
+                variant="contained"
+                className={classes.button}
+                startIcon={<DeleteIcon />}
+              >
+                שלח בקשה
+              </Button>
+            </div>
+          </form>
+        </AccordionDetails>
+      </Accordion>
+    </Paper>
+  );
+
   return (
     <div>
       <Container maxWidth="md">
@@ -84,7 +161,7 @@ export function App() {
               fullWidth
               inputRef={register}
               name={"email"}
-              onInputCapture={() => setEnteredMail(true)}
+              onInput={() => setEnteredMail(true)}
             />
             <Button
               variant={enteredMail ? "contained" : "disabled"}
@@ -95,6 +172,7 @@ export function App() {
             </Button>
           </form>
         </Paper>
+        {renderAccordion}
       </Container>
     </div>
   );

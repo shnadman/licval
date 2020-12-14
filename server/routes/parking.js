@@ -1,4 +1,5 @@
 const { validateParking } = require("../controllers/parking");
+const { cancelParking } = require("../controllers/cancelParking");
 const express = require("express");
 const multer = require(`multer`);
 const storage = multer.memoryStorage();
@@ -17,5 +18,7 @@ router
     ]),
     validateParking
   );
+
+router.route("/cancelParking/:email/:id").delete(cancelParking);
 
 module.exports = router;
