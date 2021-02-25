@@ -58,11 +58,11 @@ exports.validateParking = async (req, res, next) => {
   let idsMatch = false;
 
   await handleDriversLicense(relevant, driverLicenseImage);
-  console.log(relevant, idsMatch);
   idsMatch = await handleId(relevant, idImage);
-  if (!idsMatch)
+  if (!idsMatch) {
+    await sendMail(email, "Id numbers in driver's license and ID don't match!");
     return res.send("Id numbers in driver's license and ID don't match!");
-
+  }
   idsMatch = await handleCarLis(relevant, carLicenseImage);
 
   if (!idsMatch) {

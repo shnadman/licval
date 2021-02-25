@@ -5,7 +5,7 @@ const tesseract = require("tesseract.js");
 const { createWorker } = tesseract;
 
 const isRoshHayinCitizen = (line) => {
-  const roshHaAyin = /תל אביב - יפו/;
+  const roshHaAyin = /ראש העין/;
   return roshHaAyin.test(line);
 };
 
@@ -14,11 +14,11 @@ exports.handleIdAttachment = async (relevant, idAttachment) => {
 
   let threshold = 145;
 
-  const worker = createWorker({
-    logger: (m) => console.log(m),
-  });
-
   for (let attempt = 0; attempt < 7 && !ans; attempt++) {
+    const worker = createWorker({
+      logger: (m) => console.log(m),
+    });
+
     jimpify(threshold - attempt * 10, idAttachment);
     await worker.load();
     await worker.loadLanguage("eng");

@@ -146,7 +146,6 @@ exports.handleDriversLicense = async (relevant, driverLicense) => {
       data: { lines },
     } = await worker.recognize("./renderedNew.png");
 
-    console.log(`Attempt number ${attempt}`);
     driversLicenseAttempt(relevant, lines);
     console.log("Temp relevant is ", relevant);
     await worker.terminate();

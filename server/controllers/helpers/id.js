@@ -2,6 +2,7 @@ const _ = require("lodash");
 const jimpify = require("./jimpify");
 
 const tesseract = require("tesseract.js");
+
 const { createWorker } = tesseract;
 
 const isIdCandidate = (line) => {
@@ -14,30 +15,32 @@ exports.handleId = async (relevant, id) => {
 
   let threshold = 145;
 
-  const worker = createWorker({
-    logger: (m) => console.log(m),
-  });
+  try {
+    for (let attempt = 0; attempt < 7 && !ans; attempt++) {
+      jimpify(threshold - attempt * 10, id);
+      const worker = createWorker({
+        logger: (m) => console.log(m),
+      });
+      await worker.load();
+      await worker.loadLanguage("eng");
+      await worker.initialize("eng");
 
-  for (let attempt = 0; attempt < 7 && !ans; attempt++) {
-    jimpify(threshold - attempt * 10, id);
-    await worker.load();
-    await worker.loadLanguage("eng");
-    await worker.initialize("eng");
+      const {
+        data: { lines },
+      } = await worker.recognize("./renderedNew.png");
+      await worker.terminate();
 
-    const {
-      data: { lines },
-    } = await worker.recognize("./renderedNew.png");
-    await worker.terminate();
+      const linesText = lines.map((line) => _.trim(line.text));
+      const filtered = linesText.filter((line) => isIdCandidate(line));
+      const parsed = _.words(filtered[0]);
+      const fullId = _.parseInt(parsed.join(""));
 
-    const linesText = lines.map((line) => _.trim(line.text));
+      ans = fullId === relevant.id;
 
-    const filtered = linesText.filter((line) => isIdCandidate(line));
-    const parsed = _.words(filtered[0]);
-    const fullId = _.parseInt(parsed.join(""));
-
-    ans = fullId === relevant.id;
-
-    console.log(relevant);
+      console.log(relevant);
+    }
+  } catch (e) {
+    console.log(e);
   }
 
   return ans;
