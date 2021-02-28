@@ -63,6 +63,7 @@ exports.validateParking = async (req, res, next) => {
     await sendMail(email, "Id numbers in driver's license and ID don't match!");
     return res.send("Id numbers in driver's license and ID don't match!");
   }
+
   idsMatch = await handleCarLis(relevant, carLicenseImage);
 
   if (!idsMatch) {
@@ -82,7 +83,7 @@ exports.validateParking = async (req, res, next) => {
   const today = new Date();
 
   const isRHCitizen = handleIdAttachment(relevant, idAttachmentImage);
-  if (!relevant.roshHaAyinCitizen || isRHCitizen) {
+  if (!relevant.roshHaAyinCitizen || !isRHCitizen) {
     await sendMail(email, "Denied! Not a citizen of Rosh Ha Ayin");
     return res.send("Denied! Not a citizen of Rosh Ha Ayin");
   }

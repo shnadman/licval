@@ -36,7 +36,6 @@ const carLisAttempt = (relevant, lines) => {
       relevant.carExpires = new Date(year, month - 1, day);
     }
   }
-  console.log(relevant);
 
   if (!relevant.carNumber) {
     const filteredCarNumber = linesText.filter((line) => isCarNumber(line));
@@ -55,11 +54,13 @@ const carLisAttempt = (relevant, lines) => {
     });
   }
 
-  console.log(relevant);
-  const idRegex = /(?=.{9,10}$)[0-9]+(?:-[0-9])/;
+  //const idRegex = /(?=.{8,10}$)[0-9]+(?:-[0-9])/;
+  const idRegex = /[0-9]{6,9}-[0-9]/;
   const filteredIdLine = linesText.filter((line) => idRegex.test(line))[0];
+  console.log(filteredIdLine);
   if (filteredIdLine) {
     const id = filteredIdLine.split(" ")[0].split("-").join("");
+    console.log(id);
     return _.parseInt(id);
   }
 };
